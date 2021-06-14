@@ -1,151 +1,112 @@
 <template>
-  <v-container>
-    <v-row class="text-center">
-      <v-col cols="12">
-        <v-img
-          :src="require('../assets/logo.svg')"
-          class="my-3"
-          contain
-          height="200"
-        />
-      </v-col>
+    <v-app id="formPost">
+        <top-header/>
+        <h1 class="ml-12">Post Panel</h1>
+        <v-card class="ma-3 ml-12" v-if="userId=true">
+            
+            <v-card-title class="mb-3">
+                <h2>Nouveau post </h2>
+            </v-card-title>
+            
+            <v-card-text>
+                <v-form ref="form" class="ma-3" v-model="valid" enctype="multipart/form-data">
+                    <div class="loader" v-if="loading">
+                        <span class="helper"></span>
+                        <img class="loaderImg" src="../../assets/ajax-loader.gif" alt="load" />
+                    </div>
+                    <v-text-field v-model="dataPost.title" :rules="titleRules" :counter="50" label="Title" autofocus required></v-text-field>
+                    <input type="file" accept="image/*" @change="onChange" name="file" label="Image" :rules="imageRules" required />
+                    <v-img v-if="dataPost.imageUrl" :src="dataPost.imageUrl" alt="imageForm"  ></v-img>
+                    <v-textarea v-model="dataPost.content" :rules="contentRules" label="Content" required></v-textarea>
+                </v-form>
+            </v-card-text>
 
-      <v-col class="mb-4">
-        <h1 class="display-2 font-weight-bold mb-3">
-          Welcome to Vuetify
-        </h1>
-
-        <p class="subheading font-weight-regular">
-          For help and collaboration with other Vuetify developers,
-          <br>please join our online
-          <a
-            href="https://community.vuetifyjs.com"
-            target="_blank"
-          >Discord Community</a>
-        </p>
-      </v-col>
-
-      <v-col
-        class="mb-5"
-        cols="12"
-      >
-        <h2 class="headline font-weight-bold mb-3">
-          What's next?
-        </h2>
-
-        <v-row justify="center">
-          <a
-            v-for="(next, i) in whatsNext"
-            :key="i"
-            :href="next.href"
-            class="subheading mx-3"
-            target="_blank"
-          >
-            {{ next.text }}
-          </a>
-        </v-row>
-      </v-col>
-
-      <v-col
-        class="mb-5"
-        cols="12"
-      >
-        <h2 class="headline font-weight-bold mb-3">
-          Important Links
-        </h2>
-
-        <v-row justify="center">
-          <a
-            v-for="(link, i) in importantLinks"
-            :key="i"
-            :href="link.href"
-            class="subheading mx-3"
-            target="_blank"
-          >
-            {{ link.text }}
-          </a>
-        </v-row>
-      </v-col>
-
-      <v-col
-        class="mb-5"
-        cols="12"
-      >
-        <h2 class="headline font-weight-bold mb-3">
-          Ecosystem
-        </h2>
-
-        <v-row justify="center">
-          <a
-            v-for="(eco, i) in ecosystem"
-            :key="i"
-            :href="eco.href"
-            class="subheading mx-3"
-            target="_blank"
-          >
-            {{ eco.text }}
-          </a>
-        </v-row>
-      </v-col>
-    </v-row>
-  </v-container>
+            <v-card-actions>
+                <v-btn  :disabled="!valid" class="success" @click="sendPost">Poster</v-btn>
+            </v-card-actions>
+        </v-card>
+    </v-app>
 </template>
-
 <script>
-  export default {
-    name: 'HelloWorld',
+import axios from "axios"
+import TopHeader from "./TopHeader"
 
-    data: () => ({
-      ecosystem: [
-        {
-          text: 'vuetify-loader',
-          href: 'https://github.com/vuetifyjs/vuetify-loader',
+
+export default {
+    name: "FormPost",
+    data(){
+        return{
+            loading:false,
+            token:"",
+            valid: true,
+            titleRules: [
+                v => !!v || 'Title is required',
+                v => (v && v.length <= 50) || 'Title must be less than 50 characters',
+
+            ],
+            contentRules: [
+                v => !!v || 'Content is required',
+            ],
+            imageRules:[
+                v => !!v || 'Image is required',
+            ],
+            dataPost:{
+                title: "",
+                content:"",
+                image: null,
+                imageUrl: null,
+                userId: localStorage.userId
+            },
+            dataPostS: "",
+            msg: false,
+            message: "",
+        }
+    },
+    methods: {
+        
+        onChange(e) {
+            console.log(e.target.files);
+            const file = e.target.files[0]
+            this.dataPost.image = file
+            this.dataPost.imageUrl = URL.createObjectURL(file)
         },
-        {
-          text: 'github',
-          href: 'https://github.com/vuetifyjs/vuetify',
+        sendPost(){
+            
+            this.loading = true;
+            this.token = localStorage.getItem("token");
+            const formData = new FormData();
+            formData.append('image', this.dataPost.image);
+            formData.append('content', this.dataPost.content);
+            formData.append('title', this.dataPost.title);
+            formData.append('userId', this.dataPost.userId);
+            
+            axios.post("http://localhost:3000/api/posts/", formData, {headers: {'Content-Type': 'multipart/form-data', Authorization: 'Bearer ' + this.token}})
+                .then(response => {
+                    
+                    let rep = JSON.parse(response.data);
+                    this.message = rep.message;
+                    this.msg = true;
+                    this.form = false;
+                    
+                })
+                .catch(error => {
+                    console.log(error); 
+                    this.message = error;
+                    this.msg = true
+                })
+                .finally(() => {
+                    this.loading = false;
+                    this.$router.push('/Accueil/Mur')
+                });
         },
-        {
-          text: 'awesome-vuetify',
-          href: 'https://github.com/vuetifyjs/awesome-vuetify',
-        },
-      ],
-      importantLinks: [
-        {
-          text: 'Documentation',
-          href: 'https://vuetifyjs.com',
-        },
-        {
-          text: 'Chat',
-          href: 'https://community.vuetifyjs.com',
-        },
-        {
-          text: 'Made with Vuetify',
-          href: 'https://madewithvuejs.com/vuetify',
-        },
-        {
-          text: 'Twitter',
-          href: 'https://twitter.com/vuetifyjs',
-        },
-        {
-          text: 'Articles',
-          href: 'https://medium.com/vuetify',
-        },
-      ],
-      whatsNext: [
-        {
-          text: 'Explore components',
-          href: 'https://vuetifyjs.com/components/api-explorer',
-        },
-        {
-          text: 'Select a layout',
-          href: 'https://vuetifyjs.com/getting-started/pre-made-layouts',
-        },
-        {
-          text: 'Frequently Asked Questions',
-          href: 'https://vuetifyjs.com/getting-started/frequently-asked-questions',
-        },
-      ],
-    }),
-  }
+    },
+    components: {
+        "top-header": TopHeader, 
+        
+    },
+}
 </script>
+<style lang="scss">
+
+
+</style>

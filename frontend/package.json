@@ -10,9 +10,10 @@
   "dependencies": {
     "ansi-html": "0.0.7",
     "ansi-regex": "^6.0.1",
-    "axios": "^0.21.1",
+    "axios": "^0.21.4",
     "core-js": "^3.6.5",
     "glob-parent": "^6.0.2",
+    "nth-check": "^2.0.1",
     "set-value": "^4.1.0",
     "vue": "^2.6.11",
     "vue-router": "^3.2.0",

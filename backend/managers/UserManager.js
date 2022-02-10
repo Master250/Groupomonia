@@ -52,6 +52,7 @@ class UserManager {
                             resolve({
                                 userId: result[0].id,
                                 token: jwt.sign(
+                                    
                                     {
                                         userId: result[0].id,
                                         moderator: result[0].moderator
@@ -59,6 +60,7 @@ class UserManager {
                                     process.env.SECRET,
                                     { expiresIn: '24h' }
                                 ),
+                                
                                 moderator: result[0].moderator
                             });
                         })
